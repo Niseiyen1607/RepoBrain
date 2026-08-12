@@ -6,6 +6,7 @@ import { JetBrains_Mono, Plus_Jakarta_Sans, Geist } from "next/font/google";
 
 import { TRPCReactProvider } from "@/trpc/react";
 import { cn } from "@/lib/utils";
+import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
   title: "RepoBrain",
@@ -13,7 +14,7 @@ export const metadata: Metadata = {
   icons: [{ rel: "icon", url: "/favicon.ico" }],
 };
 
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
+const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
 const fontMono = JetBrains_Mono({
   subsets: ["latin"],
@@ -25,9 +26,13 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <ClerkProvider>
-      <html lang="en" className={cn(fontMono.variable, "font-sans", geist.variable)}>
+      <html
+        lang="en"
+        className={cn(fontMono.variable, "font-sans", geist.variable)}
+      >
         <body className="bg-background text-foreground font-sans antialiased">
           <TRPCReactProvider>{children}</TRPCReactProvider>
+          <Toaster richColors />
         </body>
       </html>
     </ClerkProvider>

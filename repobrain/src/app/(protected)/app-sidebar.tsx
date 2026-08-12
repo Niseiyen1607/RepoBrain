@@ -13,6 +13,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import useProject from "@/hooks/use-project";
 import { cn } from "@/lib/utils";
 import {
   Bot,
@@ -47,16 +48,10 @@ const items = [
   },
 ];
 
-const projects = [
-  { name: "projet1" },
-  { name: "projet2" },
-  { name: "projet3" },
-  { name: "projet4" },
-];
-
 export function AppSidebar() {
   const pathname = usePathname();
   const { open } = useSidebar();
+  const { projects, projectId, setProjectId } = useProject();
 
   return (
     <Sidebar collapsible="icon" variant="floating">
@@ -103,21 +98,27 @@ export function AppSidebar() {
           <SidebarGroupLabel>Your Projects</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {projects.map((project) => {
+              {projects?.map((project) => {
                 return (
                   <SidebarMenuItem key={project.name}>
                     <SidebarMenuButton asChild>
-                      <Link href="#">
+                      <div
+                        onClick={() => {
+                          setProjectId(project.id);
+                        }}
+                      >
                         <div
                           className={cn(
-                            "flex size-6 items-center justify-center rounded-sm border text-xs font-semibold",
-                            "bg-primary text-primary-foreground",
+                            "text-primary flex size-6 items-center justify-center rounded-sm border bg-white text-sm",
+                            {
+                              "bg-primary text-white": project.id === projectId,
+                            },
                           )}
                         >
                           {project.name[0]?.toUpperCase()}
                         </div>
                         <span>{project.name}</span>
-                      </Link>
+                      </div>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );
