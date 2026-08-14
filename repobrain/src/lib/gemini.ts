@@ -1,11 +1,12 @@
 import "dotenv/config";
 import { GoogleGenAI } from "@google/genai";
+import { Document } from "@langchain/core/documents";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
 
 export const aiSummariseCommit = async (diff: string) => {
   const response = await ai.models.generateContent({
-    model: "gemini-3.5-flash",
+    model: "gemini-3-flash-preview",
     contents: [
       `You are an expert programmer, and you are trying to summarize a git diff.
 Reminders about the git diff format:
@@ -42,3 +43,42 @@ It is given only as an example of appropriate commets.`,
 
   return response.text;
 };
+
+export async function summariseCode(doc: Document) {
+  console.log("getting summary for", doc.metadata.source);
+  try {
+    const code = doc.pageContent.slice(0, 10000);
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: [
+        `You are an intelligent senior software engineer who specialises in onboarding junior softwar engineers into projects
+      You are onboarding a junior software engineer and explaining to them the purpose of the ${doc.metadata.source} files
+      here is the code:
+      ---
+      ${code}
+      ---
+      Give a summary no more than 100 words  of the code above`,
+      ],
+    });
+
+    return response.text;
+  } catch {
+    return " ";
+  }
+}
+
+export async function generateEmbedding(summary: string) {
+  const response = await ai.models.embedContent({
+    model: "gemini-embedding-2",
+    contents: summary,
+    config: { outputDimensionality: 768 },
+  });
+
+  const embedding = response.embeddings?.[0]?.values;
+
+  if (!embedding) {
+    throw new Error("Could not generate embedding");
+  }
+
+  return embedding;
+}
