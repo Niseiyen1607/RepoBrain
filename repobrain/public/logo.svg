@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 240" width="100%" height="100%">
+  <g fill="none" stroke="#9EE6F5" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+    
+    <!-- Top-Left Document -->
+    <g transform="translate(26, 40)">
+      <path d="M 0,0 L 26,0 L 42,16 L 42,50 L 0,50 Z" />
+      <path d="M 26,0 L 26,16 L 42,16" />
+      <!-- Text lines -->
+      <line x1="8" y1="10" x2="18" y2="10" stroke-width="4" />
+      <line x1="8" y1="18" x2="34" y2="18" stroke-width="4" />
+      <line x1="8" y1="26" x2="34" y2="26" stroke-width="4" />
+      <line x1="8" y1="34" x2="34" y2="34" stroke-width="4" />
+      <line x1="8" y1="42" x2="34" y2="42" stroke-width="4" />
+    </g>
+
+    <!-- Top-Right Document -->
+    <g transform="translate(126, 40)">
+      <path d="M 0,0 L 26,0 L 42,16 L 42,50 L 0,50 Z" />
+      <path d="M 26,0 L 26,16 L 42,16" />
+      <!-- Text lines -->
+      <line x1="8" y1="10" x2="18" y2="10" stroke-width="4" />
+      <line x1="8" y1="18" x2="34" y2="18" stroke-width="4" />
+      <line x1="8" y1="26" x2="34" y2="26" stroke-width="4" />
+      <line x1="8" y1="34" x2="34" y2="34" stroke-width="4" />
+      <line x1="8" y1="42" x2="34" y2="42" stroke-width="4" />
+    </g>
+
+    <!-- Bottom-Left Document -->
+    <g transform="translate(26, 146)">
+      <path d="M 0,0 L 26,0 L 42,16 L 42,50 L 0,50 Z" />
+      <path d="M 26,0 L 26,16 L 42,16" />
+      <!-- Text lines -->
+      <line x1="8" y1="10" x2="18" y2="10" stroke-width="4" />
+      <line x1="8" y1="18" x2="34" y2="18" stroke-width="4" />
+      <line x1="8" y1="26" x2="34" y2="26" stroke-width="4" />
+      <line x1="8" y1="34" x2="34" y2="34" stroke-width="4" />
+      <line x1="8" y1="42" x2="34" y2="42" stroke-width="4" />
+    </g>
+
+    <!-- Bottom-Right Document -->
+    <g transform="translate(126, 146)">
+      <path d="M 0,0 L 26,0 L 42,16 L 42,50 L 0,50 Z" />
+      <path d="M 26,0 L 26,16 L 42,16" />
+      <!-- Text lines -->
+      <line x1="8" y1="10" x2="18" y2="10" stroke-width="4" />
+      <line x1="8" y1="18" x2="34" y2="18" stroke-width="4" />
+      <line x1="8" y1="26" x2="34" y2="26" stroke-width="4" />
+      <line x1="8" y1="34" x2="34" y2="34" stroke-width="4" />
+      <line x1="8" y1="42" x2="34" y2="42" stroke-width="4" />
+    </g>
+
+    <!-- Center Database Stack -->
+    <g stroke-width="6.5">
+      <!-- Top Ellipse -->
+      <ellipse cx="100" cy="90" rx="39" ry="18" />
+      
+      <!-- Middle Curved Layers -->
+      <path d="M 61,90 L 61,110 A 39 18 0 0 0 139,110 L 139,90" />
+      <path d="M 61,110 L 61,130 A 39 18 0 0 0 139,130 L 139,110" />
+      <path d="M 61,130 L 61,150 A 39 18 0 0 0 139,150 L 139,130" />
+    </g>
+
+  </g>
+</svg>

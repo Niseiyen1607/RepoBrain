@@ -19,7 +19,7 @@ export const loadGithubRepo = async (
       "pnpm-lock.yaml",
       "bun.lockb",
     ],
-    recursive: false,
+    recursive: true,
     unknown: "warn",
     maxConcurrency: 5,
   });
