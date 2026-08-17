@@ -1,17 +1,16 @@
 "use client";
 import useProject from "@/hooks/use-project";
-import { useUser } from "@clerk/nextjs";
 import { ExternalLink, GitGraph } from "lucide-react";
 import Link from "next/link";
 import React from "react";
 import CommitLog from "./commit-log";
 import AskQuestionCard from "./ask-question-card";
+import MeetingCard from "./meeting-card";
 
 const DashboardPage = () => {
   const { project } = useProject();
   return (
     <div>
-      {project?.id}
       <div className="flex flex-wrap items-center justify-between gap-y-4">
         {/* github link */}
         <div className="bg-primary w-fit rounded-md px-4 py-3">
@@ -42,7 +41,7 @@ const DashboardPage = () => {
       <div className="mt-4">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-5">
           <AskQuestionCard />
-          MeetingCard
+          <MeetingCard />
         </div>
       </div>
 

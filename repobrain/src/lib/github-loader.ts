@@ -11,7 +11,7 @@ export const loadGithubRepo = async (
   const cleanUrl = githubUrl.replace(/\/$/, "").replace(/\.git$/, "");
 
   const loader = new GithubRepoLoader(cleanUrl, {
-    accessToken: githubToken || "",
+    accessToken: githubToken || process.env.GITHUB_TOKEN || "",
     branch: "main",
     ignoreFiles: [
       "package-lock.json",
@@ -33,10 +33,35 @@ export const indexGithubRepo = async (
   githubToken?: string,
 ) => {
   const docs = await loadGithubRepo(githubUrl, githubToken);
-  const allEmedding = await generateEmbeddings(docs);
+  const validExtensions = [
+    ".ts",
+    ".tsx",
+    ".js",
+    ".jsx",
+    ".py",
+    ".go",
+    ".java",
+    ".rs",
+    ".cpp",
+    ".c",
+  ];
+
+  const codeDocs = docs
+    .filter((doc) => {
+      const fileName = doc.metadata.source.toLowerCase();
+      return validExtensions.some((ext) => fileName.endsWith(ext));
+    })
+    .slice(0, 20);
+
+  console.log(
+    `Indexation de ${codeDocs.length} fichiers de code essentiels...`,
+  );
+
+  const allEmbedding = await generateEmbeddings(codeDocs);
+
   await Promise.allSettled(
-    allEmedding.map(async (embedding, index) => {
-      console.log(`processing ${index} of ${allEmedding.length}`);
+    allEmbedding.map(async (embedding, index) => {
+      console.log(`processing ${index} of ${allEmbedding.length}`);
       if (!embedding) return;
 
       const sourceCodeEmbedding = await db.sourceCodeEmbedding.create({
@@ -49,9 +74,9 @@ export const indexGithubRepo = async (
       });
 
       await db.$executeRaw`
-      UPDATE "SourceCodeEmbedding"
-      SET "summaryEmbedding" = ${embedding.embedding}::vector
-      WHERE "id" = ${sourceCodeEmbedding.id}
+        UPDATE "SourceCodeEmbedding"
+        SET "summaryEmbedding" = ${embedding.embedding}::vector
+        WHERE "id" = ${sourceCodeEmbedding.id}
       `;
     }),
   );

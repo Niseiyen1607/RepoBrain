@@ -6,14 +6,15 @@ const SyncUser = async () => {
   const { userId } = await auth();
 
   if (!userId) {
-    return redirect("/sign-up");
+    return redirect("/sign-in");
   }
 
   const client = await clerkClient();
   const user = await client.users.getUser(userId);
+  const email = user.emailAddresses[0]?.emailAddress;
 
-  if (!user.emailAddresses[0]?.emailAddress) {
-    return notFound();
+  if (!email) {
+    return redirect("/sign-in");
   }
 
   await db.user.upsert({
@@ -33,6 +34,7 @@ const SyncUser = async () => {
       lastName: user.lastName,
     },
   });
+
   return redirect("/dashboard");
 };
 
