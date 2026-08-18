@@ -37,8 +37,8 @@ const items = [
     icon: Bot,
   },
   {
-    title: "Meeting",
-    url: "/meeting",
+    title: "Meetings",
+    url: "/meetings",
     icon: Presentation,
   },
   {
