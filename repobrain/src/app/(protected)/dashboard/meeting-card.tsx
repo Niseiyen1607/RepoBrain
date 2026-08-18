@@ -10,9 +10,27 @@ import { api } from "@/trpc/react";
 import useProject from "@/hooks/use-project";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { useMutation } from "@tanstack/react-query";
+import axios from "axios";
 
 const MeetingCard = () => {
   const { project } = useProject();
+  const processMeeting = useMutation({
+    mutationFn: async (data: {
+      meetingId: string;
+      meetingUrl: string;
+      projectId: string;
+    }) => {
+      const { meetingUrl, meetingId, projectId } = data;
+      const responses = await axios.post("/api/process-meeting", {
+        meetingUrl,
+        meetingId,
+        projectId,
+      });
+      return responses.data;
+    },
+  });
+
   const [isUploading, setIsUploading] = React.useState(false);
   const router = useRouter();
   const [progress, setProgress] = React.useState(0);
@@ -42,9 +60,14 @@ const MeetingCard = () => {
           name: file?.name,
         },
         {
-          onSuccess: () => {
+          onSuccess: (meeting) => {
             toast.success("Meeting upload successfully");
             router.push("/meetings");
+            processMeeting.mutateAsync({
+              meetingUrl: downloadUrl,
+              meetingId: meeting.id,
+              projectId: project.id,
+            });
           },
           onError: () => {
             toast.error("Faild to upload meeting");
