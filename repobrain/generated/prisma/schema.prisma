@@ -23,11 +23,11 @@ model User {
   lastName  String?
 
   emailAddress String @unique
-  credit       Int    @default(150)
+  credits      Int    @default(150)
 
-  userToProjects UserToProject[]
-
-  questionAsked Question[]
+  userToProjects     UserToProject[]
+  questionAsked      Question[]
+  stripeTransactions StripeTransaction[]
 }
 
 model Project {
@@ -46,6 +46,16 @@ model Project {
 
   saveQuestion Question[]
   meetings     Meeting[]
+}
+
+model StripeTransaction {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId  String
+  user    User   @relation(fields: [userId], references: [id])
+  credits Int
 }
 
 model UserToProject {

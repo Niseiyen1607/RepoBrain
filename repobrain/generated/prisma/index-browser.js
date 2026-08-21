@@ -129,7 +129,7 @@ exports.Prisma.UserScalarFieldEnum = {
   firstName: 'firstName',
   lastName: 'lastName',
   emailAddress: 'emailAddress',
-  credit: 'credit'
+  credits: 'credits'
 };
 
 exports.Prisma.ProjectScalarFieldEnum = {
@@ -139,6 +139,14 @@ exports.Prisma.ProjectScalarFieldEnum = {
   name: 'name',
   githubUrl: 'githubUrl',
   deletedAt: 'deletedAt'
+};
+
+exports.Prisma.StripeTransactionScalarFieldEnum = {
+  id: 'id',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  userId: 'userId',
+  credits: 'credits'
 };
 
 exports.Prisma.UserToProjectScalarFieldEnum = {
@@ -236,6 +244,7 @@ exports.MeetingSatus = exports.$Enums.MeetingSatus = {
 exports.Prisma.ModelName = {
   User: 'User',
   Project: 'Project',
+  StripeTransaction: 'StripeTransaction',
   UserToProject: 'UserToProject',
   Question: 'Question',
   Commit: 'Commit',

@@ -47,7 +47,7 @@ const JoinHandler = async (props: Props) => {
   } catch (error) {
     console.log("user already in project");
   }
-  return redirect(`/dashboard/${projectId}`);
+  return redirect("/dashboard/");
 };
 
 export default JoinHandler;
