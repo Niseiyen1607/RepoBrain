@@ -58,7 +58,7 @@ const QAPage = () => {
         })}
       </div>
       {question && (
-        <SheetContent className="sm:max-w-[80vw]">
+        <SheetContent className="w-full overflow-y-auto sm:max-w-[700px] lg:max-w-[900px]">
           <SheetHeader>
             <SheetTitle>{question.question}</SheetTitle>
             <MDEditor.Markdown source={question.answer} />

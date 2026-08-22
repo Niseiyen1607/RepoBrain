@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Zap } from "lucide-react";
 
 const items = [
   {
@@ -57,7 +58,9 @@ export function AppSidebar() {
     <Sidebar collapsible="icon" variant="floating">
       <SidebarHeader className="p-4 text-lg font-bold">
         <div className="flex items-center gap-2">
-          {/* <Image src='/logo.png' alt='logo' width={40} height={40} /> */}
+          <div className="flex size-8 items-center justify-center rounded-lg bg-white shadow-md">
+            <Zap className="size-5 fill-current text-[#3a64f2]" />
+          </div>
           {open && (
             <h1 className="text-primary/80 text-xl font-bold">RepoBrain</h1>
           )}

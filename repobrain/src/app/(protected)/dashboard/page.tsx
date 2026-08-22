@@ -15,7 +15,6 @@ const DashboardPage = () => {
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-y-4">
-        {/* github link */}
         <div className="bg-primary w-fit rounded-md px-4 py-3">
           <div className="item-center flex">
             <GitGraph className="size-5 text-white" />
