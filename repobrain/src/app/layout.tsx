@@ -38,20 +38,22 @@ export default function RootLayout({
       className={cn(fontMono.variable, "font-sans", geist.variable)}
     >
       <body className="flex min-h-full flex-col">
-        <ClerkProvider>
-          <header className="flex h-16 items-center justify-end gap-4 p-4">
-            <Show when="signed-out">
-              <SignInButton />
-              <SignUpButton>
-                <button className="h-10 cursor-pointer rounded-full bg-[#6c47ff] px-4 text-sm font-medium text-white sm:h-12 sm:px-5 sm:text-base">
-                  Sign Up
-                </button>
-              </SignUpButton>
-            </Show>
-            <Show when="signed-in">
-              <UserButton />
-            </Show>
-          </header>
+        <ClerkProvider
+          appearance={{
+            variables: {
+              fontFamily: "var(--font-sans)",
+              fontFamilyMono: "var(--font-mono)",
+              colorPrimary: "#3a64f2",
+            },
+            elements: {
+              formButtonPrimary:
+                "bg-[#3a64f2] hover:bg-[#5a3ae0] text-sm normal-case",
+              card: "rounded-2xl",
+              headerTitle: "text-slate-900",
+              headerSubtitle: "text-slate-500",
+            },
+          }}
+        >
           <TRPCReactProvider>{children}</TRPCReactProvider>
           <Toaster richColors />
         </ClerkProvider>
