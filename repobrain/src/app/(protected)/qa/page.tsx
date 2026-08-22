@@ -12,10 +12,13 @@ import React from "react";
 import AskQuestionCard from "../dashboard/ask-question-card";
 import MDEditor from "@uiw/react-md-editor";
 import CodeReferences from "../dashboard/code-references";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const QAPage = () => {
   const { projectId } = useProject();
-  const { data: questions } = api.project.getQuestions.useQuery({ projectId });
+  const { data: questions, isLoading } = api.project.getQuestions.useQuery({
+    projectId,
+  });
   const [questionIndex, setQuestionIndex] = React.useState(0);
   const question = questions?.[questionIndex];
 
@@ -27,6 +30,24 @@ const QAPage = () => {
 
       <div className="h-2"></div>
       <div className="flex flex-col gap-2">
+        {isLoading &&
+          [1, 2, 3].map((item) => (
+            <div
+              key={item}
+              className="flex items-center gap-4 rounded-lg border bg-white p-4 shadow"
+            >
+              <Skeleton className="size-[30px] rounded-full" />
+              <div className="flex flex-1 flex-col gap-2">
+                <Skeleton className="h-5 w-3/5" />
+                <Skeleton className="h-4 w-4/5" />
+              </div>
+            </div>
+          ))}
+
+        {!isLoading && questions?.length === 0 && (
+          <p className="text-sm text-gray-500">No saved questions yet.</p>
+        )}
+
         {questions?.map((question, index) => {
           return (
             <React.Fragment key={question.id}>

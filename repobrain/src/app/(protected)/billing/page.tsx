@@ -6,9 +6,10 @@ import { createCheckoutSession } from "@/lib/stripe";
 import { api } from "@/trpc/react";
 import { Info } from "lucide-react";
 import React from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const BillingPage = () => {
-  const { data: user } = api.project.getMyCredits.useQuery();
+  const { data: user, isLoading } = api.project.getMyCredits.useQuery();
   const [creditsToBuy, setCreditsToBuy] = React.useState<number[]>([100]);
   const creditsToBuyAmount = creditsToBuy[0]!;
   const price = (creditsToBuyAmount / 50).toFixed(2);
@@ -17,9 +18,13 @@ const BillingPage = () => {
     <div>
       <h1 className="text-xl font-semibold">Billing</h1>
       <div className="h-2"></div>
-      <p className="text-sm text-gray-500">
-        you currently have {user?.credits} credits.
-      </p>
+      {isLoading ? (
+        <Skeleton className="h-5 w-48" />
+      ) : (
+        <p className="text-sm text-gray-500">
+          you currently have {user?.credits ?? 0} credits.
+        </p>
+      )}
       <div className="h-2"></div>
       <div className="borde-blue-200 rounded-md border bg-blue-50 px-5 py-2 text-blue-700">
         <div className="flex items-center gap-2">

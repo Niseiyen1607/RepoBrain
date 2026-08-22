@@ -2,13 +2,17 @@
 
 import useProject from "@/hooks/use-project";
 import { api } from "@/trpc/react";
+import { Skeleton } from "@/components/ui/skeleton";
 import React from "react";
 
 const TeamMembers = () => {
   const { projectId } = useProject();
-  const { data: members } = api.project.getTeamMembers.useQuery({ projectId });
+  const { data: members, isLoading } = api.project.getTeamMembers.useQuery({
+    projectId,
+  });
   return (
     <div className="flex items-center gap-2">
+      {isLoading && <Skeleton className="size-8 rounded-full" />}
       {members?.map((member) => (
         <img
           key={member.id}
