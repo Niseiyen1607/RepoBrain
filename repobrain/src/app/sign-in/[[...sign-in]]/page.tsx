@@ -61,6 +61,10 @@ export default function Page() {
           </div>
 
           <SignIn
+            routing="path"
+            path="/sign-in"
+            signUpUrl="/sign-up"
+            fallbackRedirectUrl="/dashboard"
             appearance={{
               elements: {
                 rootBox: "w-full flex justify-center",

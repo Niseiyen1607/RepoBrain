@@ -24,7 +24,12 @@ const AskQuestionCard = () => {
   const [question, setQuestion] = React.useState("");
   const [loading, setLoading] = React.useState(false);
   const [filesReferences, setFileReferences] = React.useState<
-    { fileName: string; sourceCode: string; summary: string }[]
+    {
+      fileName: string;
+      sourceCode: string;
+      summary: string;
+      similarity: number;
+    }[]
   >([]);
   const [answer, setAnswer] = React.useState("");
   const saveAnswer = api.project.saveAnswer.useMutation();

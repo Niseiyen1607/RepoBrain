@@ -1,5 +1,5 @@
 import { db } from "@/server/db";
-import { Octokit, App } from "octokit";
+import { Octokit } from "octokit";
 import axios from "axios";
 import { aiSummariseCommit } from "./gemini";
 
@@ -28,23 +28,23 @@ export const getCommitHashes = async (
     owner,
     repo,
   });
-  const sortedCommits = data.sort(
-    (a: any, b: any) =>
-      new Date(b.commit.author.date).getTime() -
-      new Date(a.commit.author.date).getTime(),
-  ) as any[];
+  const sortedCommits = [...data].sort(
+    (a, b) =>
+      new Date(b.commit.author?.date ?? 0).getTime() -
+      new Date(a.commit.author?.date ?? 0).getTime(),
+  );
 
-  return sortedCommits.slice(0, 15).map((commit: any) => ({
-    commitHash: commit.sha as string,
+  return sortedCommits.slice(0, 15).map((commit) => ({
+    commitHash: commit.sha,
     commitMessage: commit.commit.message ?? "",
-    commitAuthorName: commit.commit?.author?.name ?? "",
+    commitAuthorName: commit.commit.author?.name ?? "",
     commitAuthorAvatar: commit?.author?.avatar_url ?? "",
-    commitDate: commit.commit?.author?.date ?? "",
+    commitDate: commit.commit.author?.date ?? "",
   }));
 };
 
 export const pollCommits = async (projectId: string) => {
-  const { project, githubUrl } = await fetchProjectGithubUrl(projectId);
+  const { githubUrl } = await fetchProjectGithubUrl(projectId);
   const commitHashes = await getCommitHashes(githubUrl);
   const unprocessedCommits = await filterUnprocessedCommits(
     projectId,
@@ -57,7 +57,7 @@ export const pollCommits = async (projectId: string) => {
   );
   const summaries = summaryResponses.map((response) => {
     if (response.status === "fulfilled") {
-      return response.value as string;
+      return response.value;
     }
     console.error("Erreur lors de la génération du résumé:", response.reason);
     return "";
@@ -83,12 +83,15 @@ export const pollCommits = async (projectId: string) => {
 
 async function summariseCommit(githubUrl: string, commitHash: string) {
   const cleanUrl = githubUrl.replace(/\/$/, "").replace(/\.git$/, "");
-  const { data } = await axios.get(`${cleanUrl}/commit/${commitHash}.diff`, {
-    headers: {
-      Accept: "application/vnd.github.v3.diff",
+  const { data } = await axios.get<string>(
+    `${cleanUrl}/commit/${commitHash}.diff`,
+    {
+      headers: {
+        Accept: "application/vnd.github.v3.diff",
+      },
     },
-  });
-  return (await aiSummariseCommit(data)) || "";
+  );
+  return (await aiSummariseCommit(data)) ?? "";
 }
 
 async function fetchProjectGithubUrl(projectId: string) {
@@ -98,10 +101,10 @@ async function fetchProjectGithubUrl(projectId: string) {
       githubUrl: true,
     },
   });
-  if (!project?.githubUrl) {
+  if (!project) {
     throw new Error("Project has no github url");
   }
-  return { project, githubUrl: project?.githubUrl };
+  return { githubUrl: project.githubUrl };
 }
 
 async function filterUnprocessedCommits(

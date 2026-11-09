@@ -37,8 +37,14 @@ const CreatePage = () => {
         {
           onSuccess: () => {
             toast.success("Project created successfully");
-            refetch();
-            reset();
+            void refetch()
+              .catch((error: unknown) => {
+                console.error("Failed to refresh projects", error);
+                toast.error(
+                  "Project created, but the list could not be refreshed",
+                );
+              })
+              .finally(reset);
           },
           onError: () => {
             toast.error("Faild to create project");

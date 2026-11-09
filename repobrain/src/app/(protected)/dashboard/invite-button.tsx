@@ -15,6 +15,12 @@ import { toast } from "sonner";
 const InviteButton = () => {
   const { projectId } = useProject();
   const [open, setOpen] = React.useState(false);
+  const [inviteUrl, setInviteUrl] = React.useState("");
+
+  React.useEffect(() => {
+    setInviteUrl(`${window.location.origin}/join/${projectId}`);
+  }, [projectId]);
+
   return (
     <>
       <Dialog open={open} onOpenChange={setOpen}>
@@ -29,12 +35,15 @@ const InviteButton = () => {
             className="mt-4"
             readOnly
             onClick={() => {
-              (navigator.clipboard.writeText(
-                `${window.location.origin}/join/${projectId}`,
-              ),
-                toast.success("Copied to clipboard"));
+              void navigator.clipboard
+                .writeText(`${window.location.origin}/join/${projectId}`)
+                .then(() => toast.success("Copied to clipboard"))
+                .catch((error: unknown) => {
+                  console.error("Failed to copy invite link", error);
+                  toast.error("Failed to copy invite link");
+                });
             }}
-            value={`${window.location.origin}/join/${projectId}`}
+            value={inviteUrl}
           />
         </DialogContent>
       </Dialog>

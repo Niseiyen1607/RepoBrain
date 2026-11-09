@@ -1,15 +1,11 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
 import {
   getDownloadURL,
   getStorage,
   ref,
   uploadBytesResumable,
 } from "firebase/storage";
-import { rejects } from "assert";
-import { error } from "console";
-import { Download } from "lucide-react";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -27,14 +23,13 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
 export const storage = getStorage(app);
 
 export async function uploadFile(
   file: File,
   setProgress?: (progress: number) => void,
 ) {
-  return new Promise((resolve, rejects) => {
+  return new Promise<string>((resolve, reject) => {
     try {
       const storageRef = ref(storage, file.name);
       const uploadTask = uploadBytesResumable(storageRef, file);
@@ -56,17 +51,15 @@ export async function uploadFile(
           }
         },
         (error) => {
-          rejects(error);
+          reject(error);
         },
         () => {
-          getDownloadURL(uploadTask.snapshot.ref).then((downloadUrl) => {
-            resolve(downloadUrl as string);
-          });
+          void getDownloadURL(uploadTask.snapshot.ref).then(resolve, reject);
         },
       );
     } catch (error) {
       console.error(error);
-      rejects(error);
+      reject(error instanceof Error ? error : new Error(String(error)));
     }
   });
 }

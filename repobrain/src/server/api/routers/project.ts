@@ -1,7 +1,62 @@
+import { TRPCError } from "@trpc/server";
+import type { PrismaClient } from "../../../../generated/prisma";
 import z from "zod";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { pollCommits } from "@/lib/github";
 import { checkCredits, indexGithubRepo } from "@/lib/github-loader";
+
+const filesReferencesSchema = z.array(
+  z.object({
+    fileName: z.string(),
+    sourceCode: z.string(),
+    summary: z.string(),
+    similarity: z.number(),
+  }),
+);
+
+async function assertProjectAccess(
+  db: PrismaClient,
+  userId: string,
+  projectId: string,
+) {
+  const membership = await db.userToProject.findUnique({
+    where: {
+      userId_projectId: {
+        userId,
+        projectId,
+      },
+    },
+    select: { id: true },
+  });
+
+  if (!membership) {
+    throw new TRPCError({
+      code: "NOT_FOUND",
+      message: "Project not found",
+    });
+  }
+}
+
+async function assertMeetingAccess(
+  db: PrismaClient,
+  userId: string,
+  meetingId: string,
+) {
+  const meeting = await db.meeting.findUnique({
+    where: { id: meetingId },
+    select: { projectId: true },
+  });
+
+  if (!meeting) {
+    throw new TRPCError({
+      code: "NOT_FOUND",
+      message: "Meeting not found",
+    });
+  }
+
+  await assertProjectAccess(db, userId, meeting.projectId);
+  return meeting;
+}
 
 export const projectRouter = createTRPCRouter({
   createProject: protectedProcedure
@@ -14,7 +69,7 @@ export const projectRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       const user = await ctx.db.user.findUnique({
-        where: { id: ctx.user.userId! },
+        where: { id: ctx.user.userId },
         select: { credits: true },
       });
       if (!user) {
@@ -34,7 +89,7 @@ export const projectRouter = createTRPCRouter({
           name: input.name,
           userToProjects: {
             create: {
-              userId: ctx.user.userId!,
+              userId: ctx.user.userId,
             },
           },
         },
@@ -42,7 +97,7 @@ export const projectRouter = createTRPCRouter({
       await indexGithubRepo(project.id, input.githubUrl, input.githubToken);
       await pollCommits(project.id);
       await ctx.db.user.update({
-        where: { id: ctx.user.userId! },
+        where: { id: ctx.user.userId },
         data: { credits: { decrement: fileCount } },
       });
       return project;
@@ -52,7 +107,7 @@ export const projectRouter = createTRPCRouter({
       where: {
         userToProjects: {
           some: {
-            userId: ctx.user.userId!,
+            userId: ctx.user.userId,
           },
         },
         deletedAt: null,
@@ -66,6 +121,7 @@ export const projectRouter = createTRPCRouter({
       }),
     )
     .query(async ({ ctx, input }) => {
+      await assertProjectAccess(ctx.db, ctx.user.userId, input.projectId);
       pollCommits(input.projectId).then().catch(console.error);
       return await ctx.db.commit.findMany({
         where: { projectId: input.projectId },
@@ -77,34 +133,48 @@ export const projectRouter = createTRPCRouter({
         projectId: z.string(),
         question: z.string(),
         answer: z.string(),
-        filesReferences: z.any(),
+        filesReferences: filesReferencesSchema,
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      await assertProjectAccess(ctx.db, ctx.user.userId, input.projectId);
       return await ctx.db.question.create({
         data: {
           answer: input.answer,
           filesReferences: input.filesReferences,
           projectId: input.projectId,
           question: input.question,
-          userId: ctx.user.userId!,
+          userId: ctx.user.userId,
         },
       });
     }),
   getQuestions: protectedProcedure
     .input(z.object({ projectId: z.string() }))
     .query(async ({ ctx, input }) => {
-      return await ctx.db.question.findMany({
+      await assertProjectAccess(ctx.db, ctx.user.userId, input.projectId);
+      const questions = await ctx.db.question.findMany({
         where: {
           projectId: input.projectId,
         },
         include: {
-          user: true,
+          user: {
+            select: {
+              firstName: true,
+              lastName: true,
+              imageUrl: true,
+            },
+          },
         },
         orderBy: {
           createdAt: "desc",
         },
       });
+      return questions.map((question) => ({
+        ...question,
+        filesReferences: filesReferencesSchema.parse(
+          question.filesReferences ?? [],
+        ),
+      }));
     }),
   uploadMeeting: protectedProcedure
     .input(
@@ -115,6 +185,7 @@ export const projectRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      await assertProjectAccess(ctx.db, ctx.user.userId, input.projectId);
       const meeting = await ctx.db.meeting.create({
         data: {
           meetingUrl: input.meetingUrl,
@@ -132,6 +203,7 @@ export const projectRouter = createTRPCRouter({
       }),
     )
     .query(async ({ ctx, input }) => {
+      await assertProjectAccess(ctx.db, ctx.user.userId, input.projectId);
       return await ctx.db.meeting.findMany({
         where: { projectId: input.projectId },
         include: { issues: true },
@@ -144,6 +216,7 @@ export const projectRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      await assertMeetingAccess(ctx.db, ctx.user.userId, input.meetingId);
       return await ctx.db.meeting.delete({
         where: { id: input.meetingId },
       });
@@ -155,6 +228,7 @@ export const projectRouter = createTRPCRouter({
       }),
     )
     .query(async ({ ctx, input }) => {
+      await assertMeetingAccess(ctx.db, ctx.user.userId, input.meetingId);
       return await ctx.db.meeting.findUnique({
         where: { id: input.meetingId },
         include: {
@@ -169,6 +243,7 @@ export const projectRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      await assertProjectAccess(ctx.db, ctx.user.userId, input.projectId);
       return await ctx.db.project.update({
         where: { id: input.projectId },
         data: {
@@ -183,14 +258,25 @@ export const projectRouter = createTRPCRouter({
       }),
     )
     .query(async ({ ctx, input }) => {
+      await assertProjectAccess(ctx.db, ctx.user.userId, input.projectId);
       return await ctx.db.userToProject.findMany({
-        where: { id: input.projectId },
-        include: { user: true },
+        where: { projectId: input.projectId },
+        select: {
+          id: true,
+          user: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              imageUrl: true,
+            },
+          },
+        },
       });
     }),
   getMyCredits: protectedProcedure.query(async ({ ctx }) => {
     return await ctx.db.user.findUnique({
-      where: { id: ctx.user.userId! },
+      where: { id: ctx.user.userId },
       select: { credits: true },
     });
   }),
@@ -204,9 +290,9 @@ export const projectRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const fileCount = await checkCredits(input.githubUrl, input.githubToken);
       const userCredits = await ctx.db.user.findUnique({
-        where: { id: ctx.user.userId! },
+        where: { id: ctx.user.userId },
         select: { credits: true },
       });
-      return { fileCount, userCredits: userCredits?.credits || 0 };
+      return { fileCount, userCredits: userCredits?.credits ?? 0 };
     }),
 });

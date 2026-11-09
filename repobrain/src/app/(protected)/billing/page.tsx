@@ -7,6 +7,7 @@ import { api } from "@/trpc/react";
 import { Info } from "lucide-react";
 import React from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 
 const BillingPage = () => {
   const { data: user, isLoading } = api.project.getMyCredits.useQuery();
@@ -44,15 +45,22 @@ const BillingPage = () => {
         defaultValue={[100]}
         max={1000}
         step={10}
-        onValueChange={(value) =>
-          setCreditsToBuy(Array.isArray(value) ? [...value] : [value])
+        onValueChange={(value: number | readonly number[]) =>
+          setCreditsToBuy(
+            typeof value === "number" ? [value] : Array.from(value),
+          )
         }
         value={creditsToBuy}
       />
       <div className="h-4"></div>
       <Button
         onClick={() => {
-          createCheckoutSession(creditsToBuyAmount);
+          void createCheckoutSession(creditsToBuyAmount).catch(
+            (error: unknown) => {
+              console.error("Checkout session creation failed", error);
+              toast.error("Unable to start checkout");
+            },
+          );
         }}
       >
         Buy {creditsToBuyAmount} credits for ${price}

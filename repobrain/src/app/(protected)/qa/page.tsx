@@ -83,9 +83,7 @@ const QAPage = () => {
           <SheetHeader>
             <SheetTitle>{question.question}</SheetTitle>
             <MDEditor.Markdown source={question.answer} />
-            <CodeReferences
-              filesReferences={(question.filesReferences ?? []) as any}
-            />
+            <CodeReferences filesReferences={question.filesReferences} />
           </SheetHeader>
         </SheetContent>
       )}

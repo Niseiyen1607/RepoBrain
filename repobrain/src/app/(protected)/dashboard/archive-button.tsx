@@ -26,7 +26,12 @@ const ArchiveButton = () => {
             {
               onSuccess: () => {
                 toast.success("Project archived");
-                refetch();
+                void refetch().catch((error: unknown) => {
+                  console.error("Failed to refresh projects", error);
+                  toast.error(
+                    "Project archived, but the list could not be refreshed",
+                  );
+                });
               },
               onError: () => {
                 toast.error("Failed to archive project");

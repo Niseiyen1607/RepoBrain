@@ -1,5 +1,4 @@
 import { db } from "@/server/db";
-import { headers } from "next/headers";
 import { NextResponse, type NextRequest } from "next/server";
 import Stripe from "stripe";
 
@@ -9,7 +8,10 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 export async function POST(request: NextRequest) {
   const body = await request.text();
-  const signature = (await headers()).get("Stripe-Signature") as string;
+  const signature = request.headers.get("Stripe-Signature");
+  if (!signature) {
+    return NextResponse.json({ error: "Missing signature" }, { status: 400 });
+  }
   let event: Stripe.Event;
 
   try {
@@ -18,35 +20,38 @@ export async function POST(request: NextRequest) {
       signature,
       process.env.STRIPE_WEBHOOK_SECRET!,
     );
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Invalide signature" }, { status: 400 });
   }
 
-  const session = event.data.object as Stripe.Checkout.Session;
-
   if (event.type === "checkout.session.completed") {
-    const credits = Number(session.metadata?.["credits"]);
+    const session = event.data.object;
+    const credits = Number(session.metadata?.credits);
     const userId = session.client_reference_id;
 
-    if (!userId || !credits) {
+    if (!userId || !Number.isInteger(credits) || credits <= 0) {
       return NextResponse.json(
         { error: "Missing userId or credits" },
         { status: 400 },
       );
     }
 
-    await db.stripeTransaction.create({ data: { userId, credits } });
-    await db.user.update({
-      where: { id: userId },
-      data: {
-        credits: {
-          increment: credits,
+    await db.$transaction([
+      db.stripeTransaction.create({ data: { userId, credits } }),
+      db.user.update({
+        where: { id: userId },
+        data: {
+          credits: {
+            increment: credits,
+          },
         },
-      },
-    });
+      }),
+    ]);
     return NextResponse.json(
       { message: "Credits added successfully" },
       { status: 200 },
     );
   }
+
+  return NextResponse.json({ received: true }, { status: 200 });
 }

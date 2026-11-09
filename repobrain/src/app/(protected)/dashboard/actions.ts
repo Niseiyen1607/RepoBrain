@@ -4,18 +4,44 @@ import { createStreamableValue } from "ai/rsc";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { generateEmbedding } from "@/lib/gemini";
 import { db } from "@/server/db";
+import { auth } from "@clerk/nextjs/server";
 
 const google = createGoogleGenerativeAI({
   apiKey: process.env.GEMINI_API_KEY,
 });
 
 export async function askQuestion(question: string, projectId: string) {
+  const { userId } = await auth();
+  if (!userId) {
+    throw new Error("Unauthorized");
+  }
+
+  const membership = await db.userToProject.findUnique({
+    where: {
+      userId_projectId: {
+        userId,
+        projectId,
+      },
+    },
+    select: { id: true },
+  });
+  if (!membership) {
+    throw new Error("Project not found");
+  }
+
   const stream = createStreamableValue();
 
   const queryVector = await generateEmbedding(question);
   const vectorQuery = `[${queryVector.join(",")}]`;
 
-  const result = (await db.$queryRaw`
+  const result = await db.$queryRaw<
+    {
+      fileName: string;
+      sourceCode: string;
+      summary: string;
+      similarity: number;
+    }[]
+  >`
     SELECT "fileName", "sourceCode", "summary",
     1 - ("summaryEmbedding" <=> ${vectorQuery}::vector) AS similarity
     FROM "SourceCodeEmbedding"
@@ -23,12 +49,7 @@ export async function askQuestion(question: string, projectId: string) {
       AND "projectId" = ${projectId}
     ORDER BY similarity DESC
     LIMIT 10
-  `) as {
-    fileName: string;
-    sourceCode: string;
-    summary: string;
-    similarity: number;
-  }[];
+  `;
 
   let context = "";
 
@@ -36,10 +57,11 @@ export async function askQuestion(question: string, projectId: string) {
     context += `source: ${doc.fileName}\ncode content: ${doc.sourceCode}\n summary of file: ${doc.summary}\n\n`;
   }
 
-  (async () => {
-    const { textStream } = await streamText({
-      model: google("gemini-3-flash-preview"),
-      prompt: `You are an AI code assistant who answers questions about the codebase. Your target audience is a technical junior software engineer.
+  void (async () => {
+    try {
+      const { textStream } = await streamText({
+        model: google("gemini-3-flash-preview"),
+        prompt: `You are an AI code assistant who answers questions about the codebase. Your target audience is a technical junior software engineer.
 The user is asking a question about the codebase.
 
 AI assistant is a brand new, powerful, human-like artificial intelligence.
@@ -59,13 +81,17 @@ END OF CONTEXT BLOCK
 START QUESTION
 ${question}
 END OF QUESTION`,
-    });
+      });
 
-    for await (const delta of textStream) {
-      stream.update(delta);
+      for await (const delta of textStream) {
+        stream.update(delta);
+      }
+
+      stream.done();
+    } catch (error) {
+      console.error("Question response generation failed", error);
+      stream.error(error instanceof Error ? error : new Error(String(error)));
     }
-
-    stream.done();
   })();
 
   return {

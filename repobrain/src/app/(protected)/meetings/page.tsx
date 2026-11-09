@@ -24,7 +24,7 @@ const MeetingsPage = () => {
       <MeetingCard />
       <div className="h-6"></div>
       <h1 className="text-xl font-semibold">Meetings</h1>
-      {meetings && meetings.length === 0 && <div>No meeting found</div>}
+      {!isLoading && meetings?.length === 0 && <div>No meeting found</div>}
       {isLoading && <div>Loading...</div>}
       <ul className="divide-y divide-gray-200">
         {meetings?.map((meeting) => (
@@ -70,7 +70,12 @@ const MeetingsPage = () => {
                     {
                       onSuccess: () => {
                         toast.success("Meeting deleted successfully");
-                        refetch();
+                        void refetch().catch((error: unknown) => {
+                          console.error("Failed to refresh meetings", error);
+                          toast.error(
+                            "Meeting deleted, but the list could not be refreshed",
+                          );
+                        });
                       },
                     },
                   )
